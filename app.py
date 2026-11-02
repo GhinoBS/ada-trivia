@@ -1,4 +1,4 @@
-"""Ada — trivia para dos personas, 100 % web y con estado compartido."""
+"""Ada V2 — trivia para dos, temas y cantidad configurables, 100 % web."""
 
 from __future__ import annotations
 
@@ -118,34 +118,66 @@ def landing(room_code: str):
     if room_code:
         st.markdown("### 💌 Te invitaron a jugar")
         st.info(f"Sala: {room_code}. Solo necesitas escribir tu nombre para entrar.")
-    else:
-        st.markdown("### 🎮 Una partida, dos celulares")
-        st.caption("Sin cuentas · Sin descargas · 10 preguntas · Resultados sincronizados")
-
-    with st.form("enter", clear_on_submit=False):
-        name = st.text_input("¿Cómo te llamas?", max_chars=18, placeholder="Escribe tu nombre")
-        submitted = st.form_submit_button(
-            "Unirme a la sala 💜" if room_code else "Crear sala e invitar 💜",
-            use_container_width=True,
-            type="primary",
-        )
-
-    if submitted:
-        name = " ".join(name.split())
-        if len(name) < 1 or len(name) > 18:
-            st.warning("Escribe un nombre de entre 1 y 18 caracteres.")
-            return
-        token = str(uuid.uuid4())
-        try:
-            if room_code:
+        with st.form("enter_invited"):
+            name = st.text_input("¿Cómo te llamas?", max_chars=18, placeholder="Escribe tu nombre")
+            submitted = st.form_submit_button("Unirme a la sala 💜", use_container_width=True, type="primary")
+        if submitted:
+            name = " ".join(name.split())
+            if not (1 <= len(name) <= 18):
+                st.warning("Escribe un nombre de entre 1 y 18 caracteres.")
+                return
+            token = str(uuid.uuid4())
+            try:
                 rpc("ada_join_room", {"p_code": room_code, "p_name": name, "p_token": token})
                 enter_room(room_code, token)
-            else:
-                code = rpc("ada_create_room", {"p_name": name, "p_token": token})
-                enter_room(str(code), token)
+            except BackendError as ex:
+                st.error(str(ex))
+    else:
+        st.markdown("### 🎮 Una partida, dos celulares")
+        st.caption("Sin cuentas · Sin descargas · 10 a 50 preguntas · Resultados sincronizados")
+        try:
+            catalog = rpc("ada_topics_catalog", {})
         except BackendError as ex:
-            st.error(str(ex))
-
+            st.error(f"No se pudo cargar el banco de preguntas: {ex}")
+            st.info("Actualiza Supabase con actualizar_supabase.sql y banco_preguntas.sql.")
+            return
+        topics = [str(t["name"]) for t in catalog if int(t["count"]) >= 200]
+        if not topics:
+            st.warning("Aún no hay temas habilitados. Ejecuta primero los dos archivos SQL de la actualización.")
+            return
+        st.markdown("#### ⚙️ Configura tu partida")
+        st.caption(f"📚 {len(topics)} temas · al menos 200 preguntas por tema · sin consultar Internet al jugar")
+        mode = st.radio("¿Qué temas quieres jugar?", ["Un tema", "Varios temas", "Todos los temas"], horizontal=True)
+        with st.form("create_game"):
+            name = st.text_input("¿Cómo te llamas?", max_chars=18, placeholder="Escribe tu nombre")
+            if mode == "Un tema":
+                selected = [st.selectbox("Elige un tema", topics)]
+            elif mode == "Varios temas":
+                selected = st.multiselect("Selecciona dos o más temas", topics, default=topics[:2])
+            else:
+                selected = topics
+                st.caption("🎲 Se mezclan preguntas de los ocho temas.")
+            rounds = st.select_slider("¿Cuántas preguntas?", options=[10,20,40,50], value=20)
+            submitted = st.form_submit_button("Crear sala e invitar 💜", use_container_width=True, type="primary")
+        if submitted:
+            name = " ".join(name.split())
+            if not (1 <= len(name) <= 18):
+                st.warning("Escribe un nombre de entre 1 y 18 caracteres.")
+                return
+            if not selected or (mode == "Varios temas" and len(selected) < 2):
+                st.warning("Selecciona por lo menos dos temas para jugar combinados.")
+                return
+            token = str(uuid.uuid4())
+            try:
+                code = rpc("ada_create_room", {
+                    "p_name": name,
+                    "p_token": token,
+                    "p_topics": selected,
+                    "p_total": rounds,
+                })
+                enter_room(str(code), token)
+            except BackendError as ex:
+                st.error(str(ex))
     st.markdown(
         '<div class="ada-card">📱 Abre Ada desde Safari, Chrome u otro navegador. '
         'Ambos juegan al mismo tiempo desde sus propios teléfonos.</div>',
@@ -184,6 +216,10 @@ def live_game(code: str, token: str):
     players = data.get("players", [])
     st.caption(f"Sala {code} · {len(players)}/2 jugadores · Tú: {data['my_name']}")
     scoreboard(players)
+    chosen_topics = data.get("topics", [])
+    if chosen_topics:
+        st.caption("🎯 Temas: " + ", ".join(chosen_topics) +
+                   f" · {data.get('configured_rounds', data.get('total_rounds', 10))} preguntas")
 
     if phase == "waiting":
         st.markdown(
