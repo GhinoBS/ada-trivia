@@ -295,7 +295,7 @@ def rpc(function_name: str, arguments: dict):
 def title():
     st.markdown(
         '<div class="ada-top"><div class="ada-logo">ada<span>♡</span></div>'
-        '<div class="ada-mini">un espacio bonito para jugar un ratito</div></div>',
+        '<div class="ada-mini">Muero por tus pestañas</div></div>',
         unsafe_allow_html=True,
     )
 
