@@ -12,7 +12,7 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Ada ♡",
-    page_icon="💜",
+    page_icon="💗",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
@@ -20,31 +20,214 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    [data-testid="stAppViewContainer"] {
-        background: radial-gradient(ellipse at 15% 0%, #25204d 0%, #0b1020 55%, #080d18 100%);
+    :root {
+        --rose-1: #fff7fb;
+        --rose-2: #ffeaf3;
+        --rose-3: #ffd6e8;
+        --rose-4: #f8bdd8;
+        --rose-5: #ec8fbb;
+        --rose-6: #d96aa2;
+        --plum-1: #7b4060;
+        --plum-2: #5d3350;
+        --ink-1: #4c3241;
+        --ink-2: #7a6170;
+        --line: rgba(217,106,162,.20);
+        --card: rgba(255,255,255,.78);
+        --card-strong: rgba(255,255,255,.92);
+        --shadow: 0 18px 45px rgba(172, 91, 132, .12);
     }
-    .block-container { max-width: 700px; padding-top: 1.1rem; padding-bottom: 3rem; }
+
+    [data-testid="stAppViewContainer"] {
+        background:
+            radial-gradient(circle at top left, #fffafc 0%, #ffeef5 25%, #ffe3ef 48%, #fff6fa 75%, #fffdfd 100%);
+    }
     [data-testid="stHeader"] { background: transparent; }
     #MainMenu, footer { visibility: hidden; }
-    .ada-logo { font-size: 3rem; font-weight: 900; line-height: 1.05;
-        letter-spacing: -.07em; text-align: center; margin: 0.3rem 0 0; }
-    .ada-logo span { color: #c3a6ff; }
-    .ada-card { border: 1px solid #4b4669; border-radius: 22px;
-        padding: 1.15rem; background: rgba(255,255,255,.045); margin: 0.7rem 0 1rem; }
-    .ada-eyebrow { color: #c7b3ff; font-weight: 750; font-size: .8rem;
-        letter-spacing: .1em; text-transform: uppercase; }
-    .ada-question { font-size: clamp(1.25rem, 5vw, 1.8rem);
-        font-weight: 800; letter-spacing: -.02em; line-height: 1.3; margin-top: .6rem; }
-    .ada-status { font-size: 1rem; color: #c8cdeb; margin-top: .45rem; }
-    .ada-clock { font-variant-numeric: tabular-nums; color: #eecbff;
-        font-size: 2.2rem; font-weight: 900; }
-    .stButton > button { min-height: 3.25rem; border-radius: 15px; font-weight: 700; }
-    div[data-testid="stMetric"] { border: 1px solid #44435e;
-        border-radius: 16px; background: #14172b; padding: .85rem; }
-    [data-testid="stTextInput"] input { border-radius: 12px; }
-    @media(max-width: 600px) {
-      .block-container {padding-left: 1rem; padding-right: 1rem;}
-      .ada-logo {font-size: 2.8rem;}
+
+    .block-container {
+        max-width: 760px;
+        padding-top: 1rem;
+        padding-bottom: 3rem;
+    }
+
+    html, body, [class*="css"] {
+        color: var(--ink-1);
+    }
+
+    .ada-top {
+        text-align: center;
+        margin: .35rem 0 1.15rem;
+    }
+    .ada-logo {
+        font-size: 3.4rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -.08em;
+        margin: 0;
+        color: var(--plum-2);
+    }
+    .ada-logo span {
+        color: var(--rose-6);
+    }
+    .ada-mini {
+        margin-top: .45rem;
+        font-size: .98rem;
+        color: var(--ink-2);
+    }
+
+    .ada-panel {
+        background: linear-gradient(180deg, var(--card-strong) 0%, var(--card) 100%);
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        padding: 1.2rem 1.15rem;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        margin: .85rem 0 1rem;
+    }
+
+    .ada-card {
+        border: 1px solid rgba(217,106,162,.16);
+        border-radius: 24px;
+        padding: 1.15rem;
+        background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,247,251,.92));
+        box-shadow: 0 12px 30px rgba(210, 128, 165, .10);
+        margin: .85rem 0 1rem;
+    }
+
+    .ada-eyebrow {
+        color: var(--rose-6);
+        font-weight: 800;
+        font-size: .78rem;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+    }
+
+    .ada-section-title {
+        font-size: clamp(1.5rem, 5vw, 2.45rem);
+        font-weight: 850;
+        line-height: 1.12;
+        letter-spacing: -.04em;
+        margin: .2rem 0 .25rem;
+        color: var(--plum-2);
+    }
+
+    .ada-soft {
+        color: var(--ink-2);
+        font-size: 1rem;
+        line-height: 1.55;
+        margin-top: .2rem;
+    }
+
+    .ada-question {
+        font-size: clamp(1.22rem, 4.6vw, 1.75rem);
+        font-weight: 800;
+        letter-spacing: -.02em;
+        line-height: 1.3;
+        margin-top: .45rem;
+        color: var(--plum-2);
+    }
+
+    .ada-clock {
+        font-variant-numeric: tabular-nums;
+        color: var(--rose-6);
+        font-size: 2.2rem;
+        font-weight: 900;
+        letter-spacing: -.04em;
+        margin-top: .1rem;
+    }
+
+    .ada-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-top: .45rem;
+    }
+    .ada-chip {
+        background: rgba(248, 189, 216, .28);
+        color: var(--plum-2);
+        border: 1px solid rgba(217,106,162,.18);
+        padding: .42rem .72rem;
+        border-radius: 999px;
+        font-size: .88rem;
+        font-weight: 650;
+    }
+
+    [data-testid="stTextInput"] input,
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    [data-testid="stMultiSelect"] div[data-baseweb="select"] > div {
+        border-radius: 16px !important;
+        border: 1px solid rgba(217,106,162,.18) !important;
+        background: rgba(255,255,255,.88) !important;
+        box-shadow: none !important;
+    }
+
+    div[data-testid="stMetric"] {
+        border: 1px solid rgba(217,106,162,.16);
+        border-radius: 20px;
+        background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,240,247,.95));
+        padding: 1rem .9rem;
+        box-shadow: 0 10px 24px rgba(210,128,165,.08);
+    }
+    div[data-testid="stMetric"] label,
+    div[data-testid="stMetric"] [data-testid="stMetricLabel"] {
+        color: var(--ink-2) !important;
+    }
+    div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: var(--plum-2) !important;
+    }
+
+    .stButton > button,
+    div[data-testid="stFormSubmitButton"] > button {
+        min-height: 3.3rem;
+        border-radius: 16px;
+        font-weight: 800;
+        border: none !important;
+        background: linear-gradient(135deg, #f6abc9 0%, #eb93ba 48%, #d96aa2 100%) !important;
+        color: white !important;
+        box-shadow: 0 12px 24px rgba(217, 106, 162, .26);
+        transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .stButton > button:hover,
+    div[data-testid="stFormSubmitButton"] > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 26px rgba(217, 106, 162, .30);
+    }
+
+    div[role="radiogroup"] {
+        gap: .55rem;
+    }
+    div[role="radiogroup"] label {
+        background: rgba(255,255,255,.72);
+        border: 1px solid rgba(217,106,162,.16);
+        border-radius: 999px;
+        padding: .4rem .7rem;
+    }
+
+    [data-baseweb="tag"] {
+        border-radius: 999px !important;
+        background: rgba(248, 189, 216, .32) !important;
+        color: var(--plum-2) !important;
+    }
+
+    [data-testid="stCodeBlock"] {
+        border-radius: 18px;
+        border: 1px solid rgba(217,106,162,.16);
+    }
+
+    [data-testid="stAlert"] {
+        border-radius: 18px;
+        border: 1px solid rgba(217,106,162,.14);
+    }
+
+    .stProgress > div > div > div > div {
+        background: linear-gradient(90deg, #f8bdd8 0%, #eb93ba 55%, #d96aa2 100%);
+    }
+
+    @media (max-width: 640px) {
+        .block-container { padding-left: 1rem; padding-right: 1rem; }
+        .ada-logo { font-size: 3rem; }
+        .ada-panel, .ada-card { border-radius: 22px; padding: 1rem; }
+        .ada-chip { font-size: .84rem; }
     }
     </style>
     """,
@@ -70,7 +253,7 @@ def rpc(function_name: str, arguments: dict):
         response = requests.post(
             f"{url}/rest/v1/rpc/{function_name}",
             headers={
-                "apikey": key,  # sb_secret_..., NO es un Bearer JWT
+                "apikey": key,
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
@@ -85,7 +268,6 @@ def rpc(function_name: str, arguments: dict):
             detail = response.json().get("message", "Error de base de datos")
         except ValueError:
             detail = "No se pudo procesar la solicitud."
-        # Nunca incluir la clave o los headers en el mensaje de error.
         raise BackendError(str(detail)[:240])
     try:
         return response.json()
@@ -94,11 +276,14 @@ def rpc(function_name: str, arguments: dict):
 
 
 def title():
-    st.markdown('<div class="ada-logo">ada<span>♡</span></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="ada-top"><div class="ada-logo">ada<span>♡</span></div>'
+        '<div class="ada-mini">un espacio bonito para jugar un ratito</div></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def invite_url(code: str) -> str:
-    # Devuelve exclusivamente el código de sala; JAMÁS comparte el token personal ?me=.
     return f"{st.context.url}?{urlencode({'room': code})}"
 
 
@@ -111,11 +296,13 @@ def enter_room(code: str, token: str):
 def landing(room_code: str):
     title()
     if room_code:
+        st.markdown('<div class="ada-panel">', unsafe_allow_html=True)
         st.markdown("### ♡ Qué bueno que llegaste")
         st.caption(f"Sala {room_code}")
         with st.form("enter_invited"):
             name = st.text_input("¿Cómo te llamas?", max_chars=18, placeholder="Escribe tu nombre")
-            submitted = st.form_submit_button("Entrar a la partida ♡", use_container_width=True, type="primary")
+            submitted = st.form_submit_button("Entrar ♡", use_container_width=True, type="primary")
+        st.markdown('</div>', unsafe_allow_html=True)
         if submitted:
             name = " ".join(name.split())
             if not (1 <= len(name) <= 18):
@@ -128,7 +315,6 @@ def landing(room_code: str):
             except BackendError as ex:
                 st.error(str(ex))
     else:
-        st.markdown("### ¿Jugamos? ♡")
         try:
             catalog = rpc("ada_topics_catalog", {})
         except BackendError as ex:
@@ -139,9 +325,20 @@ def landing(room_code: str):
         if not topics:
             st.warning("Aún no hay temas habilitados. Ejecuta primero los dos archivos SQL de la actualización.")
             return
-        st.markdown("#### Tú eliges")
-        mode = st.radio("¿Qué les apetece jugar?", ["Un tema", "Varios temas", "Todos los temas"], horizontal=True)
+
+        st.markdown(
+            '<div class="ada-panel">'
+            '<div class="ada-eyebrow">Crear partida</div>'
+            '<div class="ada-section-title">¿Jugamos? ♡</div>'
+            '<div class="ada-soft">Elige cómo quieren jugar y crea el enlace.</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
+        mode = st.radio("Modo", ["Un tema", "Varios temas", "Todos los temas"], horizontal=True, label_visibility="collapsed")
+
         with st.form("create_game"):
+            st.markdown('<div class="ada-card">', unsafe_allow_html=True)
             name = st.text_input("¿Cómo te llamas?", max_chars=18, placeholder="Escribe tu nombre")
             if mode == "Un tema":
                 selected = [st.selectbox("Elige un tema", topics)]
@@ -149,9 +346,14 @@ def landing(room_code: str):
                 selected = st.multiselect("Selecciona dos o más temas", topics, default=topics[:2])
             else:
                 selected = topics
-                st.caption("Un poquito de todo.")
-            rounds = st.select_slider("¿Cuántas preguntas?", options=[10,20,40,50], value=20)
+                st.markdown(
+                    '<div class="ada-chip-row">' + ''.join(f'<span class="ada-chip">{html.escape(t)}</span>' for t in topics) + '</div>',
+                    unsafe_allow_html=True,
+                )
+            rounds = st.select_slider("¿Cuántas preguntas?", options=[10, 20, 40, 50], value=20)
+            st.markdown('</div>', unsafe_allow_html=True)
             submitted = st.form_submit_button("Crear sala e invitar ♡", use_container_width=True, type="primary")
+
         if submitted:
             name = " ".join(name.split())
             if not (1 <= len(name) <= 18):
@@ -162,12 +364,15 @@ def landing(room_code: str):
                 return
             token = str(uuid.uuid4())
             try:
-                code = rpc("ada_create_room", {
-                    "p_name": name,
-                    "p_token": token,
-                    "p_topics": selected,
-                    "p_total": rounds,
-                })
+                code = rpc(
+                    "ada_create_room",
+                    {
+                        "p_name": name,
+                        "p_token": token,
+                        "p_topics": selected,
+                        "p_total": rounds,
+                    },
+                )
                 enter_room(str(code), token)
             except BackendError as ex:
                 st.error(str(ex))
@@ -182,11 +387,11 @@ def scoreboard(players):
 
 def render_invite(code: str):
     link = invite_url(code)
-    st.markdown("**💌 Mándale este enlace**")
+    st.markdown("**💌 Enlace para compartir**")
     st.code(link, language=None)
     message = f"¿Jugamos un ratito? ♡ {link}"
     st.link_button("Enviar por WhatsApp", f"https://wa.me/?text={quote(message)}", use_container_width=True)
-    st.caption("O copia el enlace y envíalo por donde prefieras.")
+    st.caption("También puedes copiarlo y mandarlo por donde prefieras.")
 
 
 @st.fragment(run_every="1s")
@@ -206,14 +411,17 @@ def live_game(code: str, token: str):
     scoreboard(players)
     chosen_topics = data.get("topics", [])
     if chosen_topics:
-        st.caption("🎯 Temas: " + ", ".join(chosen_topics) +
-                   f" · {data.get('configured_rounds', data.get('total_rounds', 10))} preguntas")
+        st.markdown(
+            '<div class="ada-chip-row">' + ''.join(f'<span class="ada-chip">{html.escape(t)}</span>' for t in chosen_topics)
+            + f'<span class="ada-chip">{data.get("configured_rounds", data.get("total_rounds", 10))} preguntas</span></div>',
+            unsafe_allow_html=True,
+        )
 
     if phase == "waiting":
         st.markdown(
             '<div class="ada-card"><div class="ada-eyebrow">Todo listo</div>'
             '<div class="ada-question">Ya estás aquí ♡</div>'
-            '<div class="ada-status">Solo falta que llegue la otra persona.</div></div>',
+            '<div class="ada-soft">Solo falta que llegue la otra persona.</div></div>',
             unsafe_allow_html=True,
         )
         render_invite(code)
@@ -221,16 +429,24 @@ def live_game(code: str, token: str):
 
     remaining = int(data.get("remaining_seconds") or 0)
     if phase == "countdown":
-        st.markdown("### Ya están aquí los dos ♡")
+        st.markdown(
+            '<div class="ada-card"><div class="ada-eyebrow">A punto de empezar</div>'
+            '<div class="ada-question">Ya están aquí los dos ♡</div></div>',
+            unsafe_allow_html=True,
+        )
         st.markdown(f'<div class="ada-clock">{remaining}s</div>', unsafe_allow_html=True)
-        st.caption("En un momento empieza la primera pregunta.")
+        st.caption("En un momento aparece la primera pregunta.")
         return
 
     if phase == "finished":
-        st.markdown("## Y así terminó esta partida ♡")
+        st.markdown(
+            '<div class="ada-card"><div class="ada-eyebrow">Final</div>'
+            '<div class="ada-question">Y así terminó esta partida ♡</div></div>',
+            unsafe_allow_html=True,
+        )
         sorted_players = sorted(players, key=lambda p: int(p["score"]), reverse=True)
         if len(sorted_players) == 2 and sorted_players[0]["score"] == sorted_players[1]["score"]:
-            st.success("¡Empate! ¿Una revancha?")
+            st.success("Empate ♡ ¿Se animan a otra?")
         elif sorted_players:
             st.success(f'Esta vez ganó {sorted_players[0]["name"]} ♡')
         if not st.session_state.get(f"celebrated_{code}", False):
@@ -245,6 +461,7 @@ def live_game(code: str, token: str):
     if not question:
         st.info("Preparando la siguiente pregunta...")
         return
+
     round_number = int(data["round"])
     total = int(data["total_rounds"])
     st.progress(round_number / max(total, 1), text=f"Pregunta {round_number} de {total}")
@@ -256,6 +473,7 @@ def live_game(code: str, token: str):
         '</div>',
         unsafe_allow_html=True,
     )
+
     caption = "⏱️ Tiempo para responder" if phase == "question" else "🔍 Respuesta revelada"
     st.caption(caption)
     st.markdown(f'<div class="ada-clock">{remaining}s</div>', unsafe_allow_html=True)
@@ -275,10 +493,7 @@ def live_game(code: str, token: str):
             )
             if clicked:
                 try:
-                    rpc(
-                        "ada_submit_answer",
-                        {"p_code": code, "p_token": token, "p_choice": i},
-                    )
+                    rpc("ada_submit_answer", {"p_code": code, "p_token": token, "p_choice": i})
                     st.rerun(scope="fragment")
                 except BackendError as ex:
                     st.warning(str(ex))
@@ -293,9 +508,9 @@ def live_game(code: str, token: str):
         if data.get("my_choice") is None:
             st.warning("Se agotó tu tiempo para responder esta pregunta.")
         elif int(data["my_choice"]) == correct_index:
-            st.success("¡Acertaste! +100 puntos 🎯")
+            st.success("¡Acertaste! +100 puntos ♡")
         else:
-            st.caption("Esta vez no sumaste puntos. ¡Vamos por la siguiente!")
+            st.caption("Esta vez no sumaste puntos. Vamos por la siguiente.")
         st.caption("La próxima pregunta aparecerá automáticamente.")
 
 
