@@ -1,207 +1,3 @@
-"""Ada V2 — trivia para dos, temas y cantidad configurables, 100 % web."""
-
-from __future__ import annotations
-
-import html
-import re
-import uuid
-from urllib.parse import quote, urlencode
-
-import requests
-import streamlit as st
-
-st.set_page_config(
-    page_title="Ada 💜 | Trivia para dos",
-    page_icon="💜",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-)
-
-st.markdown(
-    """
-    <style>
-    [data-testid="stAppViewContainer"] {
-        background: radial-gradient(ellipse at 15% 0%, #25204d 0%, #0b1020 55%, #080d18 100%);
-    }
-    .block-container { max-width: 700px; padding-top: 1.1rem; padding-bottom: 3rem; }
-    [data-testid="stHeader"] { background: transparent; }
-    #MainMenu, footer { visibility: hidden; }
-    .ada-logo { font-size: 3rem; font-weight: 900; line-height: 1.05;
-        letter-spacing: -.07em; text-align: center; margin: 0.3rem 0 0; }
-    .ada-logo span { color: #c3a6ff; }
-    .ada-sub { text-align: center; color: #b1b9d4; margin-bottom: 1.5rem; }
-    .ada-card { border: 1px solid #4b4669; border-radius: 22px;
-        padding: 1.15rem; background: rgba(255,255,255,.045); margin: 0.7rem 0 1rem; }
-    .ada-eyebrow { color: #c7b3ff; font-weight: 750; font-size: .8rem;
-        letter-spacing: .1em; text-transform: uppercase; }
-    .ada-question { font-size: clamp(1.25rem, 5vw, 1.8rem);
-        font-weight: 800; letter-spacing: -.02em; line-height: 1.3; margin-top: .6rem; }
-    .ada-status { font-size: 1rem; color: #c8cdeb; margin-top: .45rem; }
-    .ada-clock { font-variant-numeric: tabular-nums; color: #eecbff;
-        font-size: 2.2rem; font-weight: 900; }
-    .stButton > button { min-height: 3.25rem; border-radius: 15px; font-weight: 700; }
-    div[data-testid="stMetric"] { border: 1px solid #44435e;
-        border-radius: 16px; background: #14172b; padding: .85rem; }
-    [data-testid="stTextInput"] input { border-radius: 12px; }
-    @media(max-width: 600px) {
-      .block-container {padding-left: 1rem; padding-right: 1rem;}
-      .ada-logo {font-size: 2.8rem;}
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-
-class BackendError(Exception):
-    """Error controlado de la API de Ada."""
-
-
-def rpc(function_name: str, arguments: dict):
-    """La clave secreta vive solo en Python de Streamlit Cloud, nunca en el móvil."""
-    try:
-        url = str(st.secrets["SUPABASE_URL"]).rstrip("/")
-        key = str(st.secrets["SUPABASE_SECRET_KEY"])
-    except (KeyError, FileNotFoundError):
-        raise BackendError(
-            "Falta configurar SUPABASE_URL y SUPABASE_SECRET_KEY en los Secrets de Streamlit."
-        ) from None
-
-    try:
-        response = requests.post(
-            f"{url}/rest/v1/rpc/{function_name}",
-            headers={
-                "apikey": key,  # sb_secret_..., NO es un Bearer JWT
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            json=arguments,
-            timeout=12,
-        )
-    except requests.RequestException:
-        raise BackendError("No se pudo conectar con la base de datos. Intenta de nuevo.") from None
-
-    if not response.ok:
-        try:
-            detail = response.json().get("message", "Error de base de datos")
-        except ValueError:
-            detail = "No se pudo procesar la solicitud."
-        # Nunca incluir la clave o los headers en el mensaje de error.
-        raise BackendError(str(detail)[:240])
-    try:
-        return response.json()
-    except ValueError:
-        raise BackendError("Respuesta inesperada de la base de datos.") from None
-
-
-def title():
-    st.markdown('<div class="ada-logo">ada<span>♡</span></div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ada-sub">Un duelo de preguntas para dos personas, estén donde estén.</div>',
-        unsafe_allow_html=True,
-    )
-
-
-def invite_url(code: str) -> str:
-    # Devuelve exclusivamente el código de sala; JAMÁS comparte el token personal ?me=.
-    return f"{st.context.url}?{urlencode({'room': code})}"
-
-
-def enter_room(code: str, token: str):
-    st.query_params["room"] = code
-    st.query_params["me"] = token
-    st.rerun()
-
-
-def landing(room_code: str):
-    title()
-    if room_code:
-        st.markdown("### 💌 Te invitaron a jugar")
-        st.info(f"Sala: {room_code}. Solo necesitas escribir tu nombre para entrar.")
-        with st.form("enter_invited"):
-            name = st.text_input("¿Cómo te llamas?", max_chars=18, placeholder="Escribe tu nombre")
-            submitted = st.form_submit_button("Unirme a la sala 💜", use_container_width=True, type="primary")
-        if submitted:
-            name = " ".join(name.split())
-            if not (1 <= len(name) <= 18):
-                st.warning("Escribe un nombre de entre 1 y 18 caracteres.")
-                return
-            token = str(uuid.uuid4())
-            try:
-                rpc("ada_join_room", {"p_code": room_code, "p_name": name, "p_token": token})
-                enter_room(room_code, token)
-            except BackendError as ex:
-                st.error(str(ex))
-    else:
-        st.markdown("### 🎮 Una partida, dos celulares")
-        st.caption("Sin cuentas · Sin descargas · 10 a 50 preguntas · Resultados sincronizados")
-        try:
-            catalog = rpc("ada_topics_catalog", {})
-        except BackendError as ex:
-            st.error(f"No se pudo cargar el banco de preguntas: {ex}")
-            st.info("Actualiza Supabase con actualizar_supabase.sql y banco_preguntas.sql.")
-            return
-        topics = [str(t["name"]) for t in catalog if int(t["count"]) >= 200]
-        if not topics:
-            st.warning("Aún no hay temas habilitados. Ejecuta primero los dos archivos SQL de la actualización.")
-            return
-        st.markdown("#### ⚙️ Configura tu partida")
-        st.caption(f"📚 {len(topics)} temas · al menos 200 preguntas por tema · sin consultar Internet al jugar")
-        mode = st.radio("¿Qué temas quieres jugar?", ["Un tema", "Varios temas", "Todos los temas"], horizontal=True)
-        with st.form("create_game"):
-            name = st.text_input("¿Cómo te llamas?", max_chars=18, placeholder="Escribe tu nombre")
-            if mode == "Un tema":
-                selected = [st.selectbox("Elige un tema", topics)]
-            elif mode == "Varios temas":
-                selected = st.multiselect("Selecciona dos o más temas", topics, default=topics[:2])
-            else:
-                selected = topics
-                st.caption("🎲 Se mezclan preguntas de los ocho temas.")
-            rounds = st.select_slider("¿Cuántas preguntas?", options=[10,20,40,50], value=20)
-            submitted = st.form_submit_button("Crear sala e invitar 💜", use_container_width=True, type="primary")
-        if submitted:
-            name = " ".join(name.split())
-            if not (1 <= len(name) <= 18):
-                st.warning("Escribe un nombre de entre 1 y 18 caracteres.")
-                return
-            if not selected or (mode == "Varios temas" and len(selected) < 2):
-                st.warning("Selecciona por lo menos dos temas para jugar combinados.")
-                return
-            token = str(uuid.uuid4())
-            try:
-                code = rpc("ada_create_room", {
-                    "p_name": name,
-                    "p_token": token,
-                    "p_topics": selected,
-                    "p_total": rounds,
-                })
-                enter_room(str(code), token)
-            except BackendError as ex:
-                st.error(str(ex))
-    st.markdown(
-        '<div class="ada-card">📱 Abre Ada desde Safari, Chrome u otro navegador. '
-        'Ambos juegan al mismo tiempo desde sus propios teléfonos.</div>',
-        unsafe_allow_html=True,
-    )
-
-
-def scoreboard(players):
-    cols = st.columns(2, gap="small")
-    for i, player in enumerate(players[:2]):
-        with cols[i]:
-            st.metric(str(player["name"]), f'{int(player["score"])} pts')
-
-
-def render_invite(code: str):
-    link = invite_url(code)
-    st.markdown("**💌 Enlace para invitar**")
-    st.code(link, language=None)
-    message = f"¡Juguemos Ada! 💜 Entra aquí: {link}"
-    st.link_button("Enviar por WhatsApp", f"https://wa.me/?text={quote(message)}", use_container_width=True)
-    st.caption("Copia el enlace para mandarlo también por Instagram u otro chat.")
-
-
-@st.fragment(run_every="1s")
 def live_game(code: str, token: str):
     try:
         data = rpc("ada_room_state", {"p_code": code, "p_token": token})
@@ -223,9 +19,9 @@ def live_game(code: str, token: str):
 
     if phase == "waiting":
         st.markdown(
-            '<div class="ada-card"><div class="ada-eyebrow">Esperando jugador</div>'
-            '<div class="ada-question">✨ Comparte el enlace con tu persona favorita.</div>'
-            '<div class="ada-status">La partida comenzará automáticamente cuando los dos entren.</div></div>',
+            '<div class="ada-card"><div class="ada-eyebrow">Todo listo</div>'
+            '<div class="ada-question">Ya estás aquí ♡</div>'
+            '<div class="ada-status">Solo falta que llegue la otra persona.</div></div>',
             unsafe_allow_html=True,
         )
         render_invite(code)
@@ -233,23 +29,22 @@ def live_game(code: str, token: str):
 
     remaining = int(data.get("remaining_seconds") or 0)
     if phase == "countdown":
-        st.markdown("### ¡Ya están los dos! 🎉")
+        st.markdown("### Ya están aquí los dos ♡")
         st.markdown(f'<div class="ada-clock">{remaining}s</div>', unsafe_allow_html=True)
-        st.info("Preparen sus dedos. La primera pregunta aparece automáticamente.")
+        st.caption("En un momento empieza la primera pregunta.")
         return
 
     if phase == "finished":
-        st.markdown("## 🏆 ¡Partida terminada!")
+        st.markdown("## Y así terminó esta partida ♡")
         sorted_players = sorted(players, key=lambda p: int(p["score"]), reverse=True)
         if len(sorted_players) == 2 and sorted_players[0]["score"] == sorted_players[1]["score"]:
-            st.success("¡Empataron! 💜")
+            st.success("¡Empate! ¿Una revancha?")
         elif sorted_players:
-            st.success(f'🥇 Ganó {sorted_players[0]["name"]}. ¡Felicidades!')
+            st.success(f'Esta vez ganó {sorted_players[0]["name"]} ♡')
         if not st.session_state.get(f"celebrated_{code}", False):
             st.session_state[f"celebrated_{code}"] = True
             st.balloons()
-        st.caption("Para jugar otra partida, abre la página de inicio y crea otra sala.")
-        if st.button("Crear otra sala", use_container_width=True, type="primary"):
+        if st.button("¿Otra partida? ♡", use_container_width=True, type="primary"):
             st.query_params.clear()
             st.rerun()
         return
@@ -331,11 +126,3 @@ def main():
             st.rerun()
         return
     if code and token:
-        title()
-        live_game(code, token)
-    else:
-        landing(code)
-
-
-if __name__ == "__main__":
-    main()
