@@ -85,6 +85,15 @@ st.markdown(
         margin: .85rem 0 1rem;
     }
 
+    /* La tarjeta es el formulario nativo de Streamlit, no un div suelto. */
+    [data-testid="stForm"] {
+        border: 1px solid rgba(217,106,162,.16) !important;
+        border-radius: 24px !important;
+        background: rgba(255,255,255,.62) !important;
+        padding: 1rem !important;
+        box-shadow: 0 12px 30px rgba(210,128,165,.10);
+    }
+
     .ada-card {
         border: 1px solid rgba(217,106,162,.16);
         border-radius: 24px;
@@ -116,6 +125,14 @@ st.markdown(
         font-size: 1rem;
         line-height: 1.55;
         margin-top: .2rem;
+    }
+
+    .ada-love-note {
+        color: var(--ink-2);
+        font-size: clamp(.97rem, 2.7vw, 1.07rem);
+        line-height: 1.65;
+        margin: .55rem 0 .15rem;
+        max-width: 60ch;
     }
 
     .ada-question {
@@ -296,13 +313,15 @@ def enter_room(code: str, token: str):
 def landing(room_code: str):
     title()
     if room_code:
-        st.markdown('<div class="ada-panel">', unsafe_allow_html=True)
-        st.markdown("### ♡ Qué bueno que llegaste")
+        st.markdown(
+            '<div class="ada-panel"><div class="ada-section-title">'
+            'Qué bueno que llegaste ♡</div></div>',
+            unsafe_allow_html=True,
+        )
         st.caption(f"Sala {room_code}")
         with st.form("enter_invited"):
             name = st.text_input("¿Cómo te llamas?", max_chars=18, placeholder="Escribe tu nombre")
             submitted = st.form_submit_button("Entrar ♡", use_container_width=True, type="primary")
-        st.markdown('</div>', unsafe_allow_html=True)
         if submitted:
             name = " ".join(name.split())
             if not (1 <= len(name) <= 18):
@@ -330,7 +349,8 @@ def landing(room_code: str):
             '<div class="ada-panel">'
             '<div class="ada-eyebrow">Crear partida</div>'
             '<div class="ada-section-title">¿Jugamos? ♡</div>'
-            '<div class="ada-soft">Elige cómo quieren jugar y crea el enlace.</div>'
+            '<div class="ada-love-note">No me importan los kilómetros que nos separen '
+            'físicamente; siempre te llevo en mi mente y en mi corazón.</div>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -338,7 +358,6 @@ def landing(room_code: str):
         mode = st.radio("Modo", ["Un tema", "Varios temas", "Todos los temas"], horizontal=True, label_visibility="collapsed")
 
         with st.form("create_game"):
-            st.markdown('<div class="ada-card">', unsafe_allow_html=True)
             name = st.text_input("¿Cómo te llamas?", max_chars=18, placeholder="Escribe tu nombre")
             if mode == "Un tema":
                 selected = [st.selectbox("Elige un tema", topics)]
@@ -351,7 +370,6 @@ def landing(room_code: str):
                     unsafe_allow_html=True,
                 )
             rounds = st.select_slider("¿Cuántas preguntas?", options=[10, 20, 40, 50], value=20)
-            st.markdown('</div>', unsafe_allow_html=True)
             submitted = st.form_submit_button("Crear sala e invitar ♡", use_container_width=True, type="primary")
 
         if submitted:
